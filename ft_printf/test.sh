@@ -1,4 +1,4 @@
-gcc -w ft_printf.c main.c -o printf
+gcc -Wall -Werror -Wextra ft_printf.c main.c -o printf
 ./printf | cat -e > yours.res
 gcc -w -D REAL ft_printf.c main.c -o printf
 ./printf | cat -e > original.res
