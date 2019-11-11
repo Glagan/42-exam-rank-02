@@ -1,0 +1,23 @@
+Assignment name  : inter
+Expected files   : inter.c
+Allowed functions: write
+--------------------------------------------------------------------------------
+
+Escreva um programa que tenha como parâmetro duas cadeias de caracteres e que
+mostre sem duplicações os caracteres comuns às duas cadeias.
+
+A exibição deve ser feita seguindo a ordem em que os caracteres aparecem na primeira cadeia.
+A exibição deve ser seguida de um '\n'.
+
+Se o número de parâmetros transmitidos for diferente de 2, o programa exibe
+'\n'.
+
+Exemplos:
+$>./inter "padinton" "paqefwtdjetyiytjneytjoeyjnejeyj" | cat -e
+padinto$
+$>./inter ddf6vewg64f gtwthgdwthdwfteewhrtag6h4ffdhsd | cat -e
+df6ewg4$
+$>./inter "rien" "cette phrase ne cache rien" | cat -e
+rien$
+$>./inter | cat -e
+$

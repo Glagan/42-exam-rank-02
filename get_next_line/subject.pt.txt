@@ -1,0 +1,34 @@
+Assignment name  : get_next_line
+Expected files   : get_next_line.c get_next_line.h
+Allowed functions: read, free, malloc
+--------------------------------------------------------------------------------
+
+Escreva uma função que armazene, no parâmetro "line", uma linha lida a partir do "file descriptor" 0.
+
+A função será prototipada da seguinte forma: int get_next_line(char **line);
+
+Sua função não pode ter vazamento de memória.
+
+Chamamos de "linha lida" uma sequência de 0 a n caracteres que termina com um '\n' (code ascii 0x0a) ou um Fim De Arquivo (EOF).
+
+A cadeia de caracteres armazenada na "line" não deve conter '\n'.
+
+O parâmetro da função é o endereço de um ponteiro para caractere e servirá para salvar a linha lida.
+
+O valor de retorno será 1, 0 ou -1 em função respectivamente, de ter lido uma linha, de ter terminado de ler (isso significa que read retornou 0) ou de ter acontecido um erro.
+
+Se a sua função atingir um "fim de arquivo" (EOF), você deverá armazenar o "buffer" atual em "line". Se o "buffer" estiver vazio, "line" deverá apontar para uma cadeia de caracteres vazia.
+
+Se a sua função atingir um "fim de arquivo" (EOF), ela não deve conservar nenhum espaço de memória alocado por malloc, exceto o último "buffer" armazenado em "line".
+
+O conteúdo de "line" deverá poder ser liberado usando a função free.
+
+Uma chamada em loop de get_next_line vai permitir que você leia a totalidade do texto disponível por meio de um "file descriptor", uma linha de cada vez. Pouco importa o tamanho do texto ou de uma de suas linhas.
+
+Certifique-se de que sua função funcione corretamente se você ler a partir de um arquivo, da entrada padrão, de um redirecionamento, etc...
+
+Saiba que nenhuma outra chamada será feita no "file descriptor" entre 2 chamadas à sua função get_next_line.
+
+Por último, saiba que o comportamento da sua get_next_line será indeterminado se a utilizarmos em um conteúdo binário.
+
+Recomendamos que você utilize o arquivo test.sh para testar sua get_next_line.

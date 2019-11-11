@@ -1,0 +1,30 @@
+Assignment name  : union
+Expected files   : union.c
+Allowed functions: write
+--------------------------------------------------------------------------------
+
+Escreva um programa chamado union que tenha como parâmetro duas cadeias de
+caracteres e que mostre, sem duplicatas, os caracteres que aparecem em
+uma ou em outra.
+
+A exibição deve ser feita seguindo a ordem em que aparecem na linha de comando.
+
+A exibição deve ser seguida de uma quebra de linha.
+
+Se o número de parâmetros transmitidos for diferente de 2, o programa exibe
+\n.
+
+Exemplo:
+
+$>./union zpadinton "paqefwtdjetyiytjneytjoeyjnejeyj" | cat -e
+zpadintoqefwjy$
+$>./union ddf6vewg64f gtwthgdwthdwfteewhrtag6h4ffdhsd | cat -e
+df6vewg4thras$
+$>./union "rien" "cette phrase ne cache rien" | cat -e
+rienct phas$
+$>./union | cat -e
+$
+$>
+$>./union "rien" | cat -e
+$
+$>
