@@ -3,3 +3,5 @@
 The first exam of the new cursus.
 
 Subjects are in the folder of each exercises, along with a solution and a test file.
+
+``get_next_line`` **passed** the Exam **Moulinette**, and ``ft_printf`` doesn't, but has a lot of tests.

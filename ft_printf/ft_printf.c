@@ -1,28 +1,17 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ft_printf.c                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ncolomer <ncolomer@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2019/11/11 14:30:34 by ncolomer          #+#    #+#             */
-/*   Updated: 2019/11/11 16:10:08 by ncolomer         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include <unistd.h>
-#include <stdarg.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
-# define ABS(x)	(x < 0 ? -x : x)
+#define MIN(a, b)	((a < b) ? a : b)
+#define ABS(x) 		((x < 0) ? -x : x)
 
 typedef struct	s_str
 {
-	char		*content;
+	char			*content;
 	struct s_str	*next;
 }				t_str;
 
-int
+static int
 	ft_strlen(char const *str)
 {
 	int	i;
@@ -33,16 +22,16 @@ int
 	return (i);
 }
 
-char
+static char
 	*ft_substr(char const *str, int start, int length)
 {
 	int		i;
 	char	*cpy;
 	int		str_length;
 
-	if (!(cpy = (char*)malloc(sizeof(*cpy) * (length + 1))))
-		return (NULL);
 	str_length = ft_strlen(str);
+	if (!(cpy = (char*)malloc(sizeof(*cpy) * (str_length + 1))))
+		return (NULL);
 	i = 0;
 	while (start + i < str_length && i < length)
 	{
@@ -53,32 +42,29 @@ char
 	return (cpy);
 }
 
-int
+static int
+	ft_isdigit(char c)
+{
+	return (c >= '0' && c <= '9');
+}
+
+static int
 	ft_in_set(char c, char const *set)
 {
 	int	i;
 
 	i = 0;
 	while (set[i])
-	{
-		if (c == set[i])
+		if (set[i++] == c)
 			return (1);
-		i++;
-	}
 	return (0);
 }
 
-int
-	ft_is_digit(char c)
-{
-	return (c >= '0' && c <= '9');
-}
-
-t_str
+static t_str
 	*str_add(t_str **str, char *content)
 {
+	t_str	*tmp;
 	t_str	*new;
-	t_str	*first;
 
 	if (!content)
 		return (NULL);
@@ -90,70 +76,71 @@ t_str
 		*str = new;
 	else
 	{
-		first = *str;
+		tmp = *str;
 		while ((*str)->next)
 			*str = (*str)->next;
 		(*str)->next = new;
-		*str = first;
+		*str = tmp;
 	}
 	return (new);
 }
 
-int
-	str_clear(t_str **str)
-{
-	t_str	*tmp;
-
-	while (*str)
-	{
-		tmp = (*str)->next;
-		free((*str)->content);
-		free(*str);
-		*str = tmp;
-	}
-	return (0);
-}
-
-int
+static int
 	str_write(t_str *str)
 {
-	int	i;
 	int	total;
+	int	length;
 
 	total = 0;
 	while (str)
 	{
-		i = ft_strlen(str->content);
-		total += i;
-		if (i > 0)
-			write(1, str->content, i);
+		length = ft_strlen(str->content);
+		total += length;
+		if (length > 0)
+			write(1, str->content, length);
 		str = str->next;
 	}
 	return (total);
 }
 
-int
+static int
+	str_clear(t_str **str)
+{
+	t_str	*next;
+
+	while (*str)
+	{
+		next = (*str)->next;
+		free((*str)->content);
+		free(*str);
+		*str = next;
+	}
+	return (0);
+}
+
+static int
 	parse_flags(char const *flags, int *width, int *precision)
 {
 	int	i;
 	int	state;
 	int	tmp;
-
-	*width = -1;
+	
 	*precision = -1;
+	*width = -1;
+	state = 0;
 	i = 0;
 	while (flags[i])
 	{
 		if (flags[i] == '.')
 		{
-			state = 1;
 			*precision = 0;
+			state = 1;
 			i++;
 		}
-		else if (ft_is_digit(flags[i]))
+		else if (ft_isdigit(flags[i]))
 		{
 			tmp = 0;
-			while (ft_is_digit(flags[i]))
+			while (ft_isdigit(flags[i]))
 				tmp = (tmp * 10) + (flags[i++] - '0');
 			if (state)
 				*precision = tmp;
@@ -167,48 +154,67 @@ int
 	return (1);
 }
 
-void
-	*free_ptr(void *ptr)
-{
-	free(ptr);
-	return (NULL);
-}
-
-char
-	*copy_signed(int width, int precision, int val)
+static char
+	*malloc_decimal(int length, int precision)
 {
 	char	*str;
 	int		i;
-	int		length;
-	int		tmp;
-	int		_length;
-	long	_tmp;
 
-	(void) precision;
+	if (!(str = (char*)malloc(sizeof(*str) * (length + 1))))
+		return (NULL);
+	i = 0;
+	while (i < length)
+	{
+		if (precision >= 0 && length - i <= precision)
+			str[i] = '0';
+		else
+			str[i] = ' ';
+		i++;
+	}
+	str[i] = 0;
+	return (str);
+}
+
+static char
+	*format_signed(int width, int precision, int val)
+{
+	char	*str;
+	int		tmp;
+	long	ltmp;
+	int		i;
+	int		length;
+	int		nbr_length;
+
+	ltmp = val;
+	if (ltmp > 2147483647)
+		val = (-2147483648 + (ltmp - 2147483647));
+	else if (ltmp < -2147483648)
+		val = (2147483647 - (-2147483648 - ltmp));
+	nbr_length = 1;
 	tmp = val;
-	length = 1 + (val < 0);
 	while (tmp > 9 || tmp < -9)
 	{
 		tmp /= 10;
-		length++;
+		nbr_length++;
 	}
-	_length = length;
-	if (width > length)
-		_length = width;
-	if (!(str = (char*)malloc(sizeof(*str) * (_length + 1))))
+	length = nbr_length + (val < 0);
+	if (width > nbr_length)
+		length = width;
+	if (precision > length)
+		length = precision;
+	if (!(str = malloc_decimal(length, precision)))
 		return (NULL);
-	i = 0;
-	while (i < _length)
-		str[i++] = ' ';
-	str[_length] = 0;
-	if (val == 0)
-		str[_length - 1] = '0';
-	i = _length - 1;
+	if (precision == 0 && val == 0)
+		str[length - 1] = (width == length) ? ' ' : 0;
+	else if (val == 0)
+		str[length - 1] = '0';
 	tmp = val;
+	i = length - 1;
 	while (tmp != 0)
 	{
-		_tmp = tmp;
-		str[i--] = "0123456789"[ABS(_tmp) % 10];
+		ltmp = tmp;
+		ltmp = ABS(ltmp);
+		str[i--] = "0123456789"[ltmp % 10];
 		tmp /= 10;
 	}
 	if (val < 0)
@@ -216,139 +222,192 @@ char
 	return (str);
 }
 
-char
-	*copy_hex(int width, int precision, unsigned int val)
+static char
+	*format_hex(int width, int precision, unsigned int val)
 {
+	unsigned int	tmp;
+	int				nbr_length;
+	int				length;
 	char			*str;
 	int				i;
-	int				length;
-	unsigned int	tmp;
-	int				_length;
 
-	(void) precision;
+	nbr_length = 1;
 	tmp = val;
-	length = 1;
 	while (tmp > 15)
 	{
+		nbr_length++;
 		tmp /= 16;
-		length++;
 	}
-	_length = length;
-	if (width > length)
-		_length = width;
-	if (!(str = (char*)malloc(sizeof(*str) * (_length + 1))))
+	length = nbr_length;
+	if (width > nbr_length)
+		length = width;
+	if (precision > length)
+		length = precision;
+	if (!(str = malloc_decimal(length, precision)))
 		return (NULL);
-	i = 0;
-	while (i < _length)
-		str[i++] = ' ';
-	str[_length] = 0;
-	if (val == 0)
-		str[_length - 1] = '0';
-	i = _length - 1;
-	while (val != 0)
+	if (precision == 0 && val == 0)
+		str[length - 1] = (width == length) ? ' ' : 0;
+	else if (val == 0)
+		str[length - 1] = '0';
+	i = length - 1;
+	tmp = val;
+	while (tmp != 0)
 	{
-		str[i--] = "0123456789abcdef"[val % 16];
-		val /= 16;
+		str[i--] = "0123456789abcdef"[tmp % 16];
+		tmp /= 16;
 	}
 	return (str);
 }
 
-char
-	*copy_str(int width, int precision, char *str)
+static char
+	*format_str(int width, int precision, char *str)
 {
+	char	*cpy;
+	int		str_length;
+	int		length;
 	int		i;
 	int		j;
-	int		start;
-	int		length;
-	int		_length;
-	char	*cpy;
+	int		width_defined;
+	int		limit;
 
+	width_defined = (width > 0);
 	if (!str)
 		str = "(null)";
-	length = ft_strlen(str);
-	_length = length;
-	if (width > length)
-		_length = width;
-	if (!(cpy = (char*)malloc(sizeof(*cpy) * (_length + 1))))
+	str_length = ft_strlen(str);
+	length = str_length;
+	if (width > str_length)
+		length = width;
+	if (!(cpy = (char*)malloc(sizeof(*cpy) * (length + 1))))
 		return (NULL);
+
 	i = 0;
-	while (i < _length)
+	while (i < length)
 		cpy[i++] = ' ';
-	cpy[_length] = 0;
-	start = 0;
-	if (width > length)
-		start = width - length;
+	cpy[i] = 0;
+
+	if (width > 0 && precision == 0)
+	{
+		cpy[width] = 0;
+		return (cpy);
+	}
+
+	if (precision >= 0)
+		limit = MIN(str_length, precision);
+	else
+		limit = str_length;
+
 	j = 0;
-	while (j < length && (precision < 0 || j < precision))
-		cpy[start++] = str[j++];
-	cpy[start] = 0;
+	if (width_defined)
+		i = length - limit;
+	else
+		i = 0;
+
+	while (j < limit)
+		cpy[i++] = str[j++];
+	cpy[i] = 0;
 	return (cpy);
 }
 
-t_str
-	*add_format(t_str **res, char *flags, char format, va_list *args)
+static char
+	*format_missing(char const *flags, char format)
 {
+	char	*str;
+	int		length;
+	int		i;
+	int		j;
+
+	length = ft_strlen(flags) + 1 + 1;
+	if (!(str = (char*)malloc(sizeof(*str) * (length + 1))))
+		return (NULL);
+	i = 0;
+	str[i++] = '%';
+	j = 0;
+	while (flags[j])
+		str[i++] = flags[j++];
+	str[i++] = format;
+	str[i] = 0;
+	return (str);
+}
+
+static int
+	do_free(void *ptr)
+{
+	if (ptr)
+		free(ptr);
+	return (0);
+}
+
+static int
+	add_format(t_str **str, char *flags, char d, va_list *args)
+{
+	char	*mat;
 	int		width;
 	int		precision;
-	char	*str;
+	int		fla;
 
 	if (!flags)
 		return (0);
-	if (!parse_flags(flags, &width, &precision))
-		return (free_ptr(flags));
+	fla = parse_flags(flags, &width, &precision);
+	if (!fla)
+		return (do_free(flags));
+	mat = NULL;
+	if (d == 'd')
+		mat = format_signed(width, precision, va_arg(*args, int));
+	else if (d == 'x')
+		mat = format_hex(width, precision, va_arg(*args, unsigned int));
+	else if (d == 's')
+		mat = format_str(width, precision, va_arg(*args, char*));
+	else
+		mat = format_missing(flags, d);
 	free(flags);
-	str = NULL;
-	if (format == 'd')
-		str = copy_signed(width, precision, va_arg(*args, int));
-	else if (format == 'x')
-		str = copy_hex(width, precision, va_arg(*args, unsigned int));
-	else if (format == 's')
-		str = copy_str(width, precision, va_arg(*args, char*));
-	if (!str)
+	if (!mat)
 		return (0);
-	return (str_add(res, str));
+	if (!str_add(str, mat))
+		return (0);
+	return (1);
 }
 
-int
-	clean_exit(t_str **str, va_list *args)
+static int
+	clear_all(t_str **str, va_list *args)
 {
+	str_clear(str);
 	va_end(*args);
-	return (str_clear(str));
+	return (0);
 }
 
-/*
-** Written in ~1h40min... with Visual Studio Code after 1h so... under 2hours ? (I hope)
-*/
 int
-	ft_printf(char const *str, ...)
+	ft_printf(char const *format, ...)
 {
+	t_str	*str;
 	int		i;
 	int		start;
-	va_list	args;
-	t_str	*res;
 	int		length;
+	va_list	args;
 
-	res = NULL;
-	length = ft_strlen(str);
-	va_start(args, str);
+
+	str = NULL;
+	if (!format)
+		return (0);
+	va_start(args, format);
+	length = ft_strlen(format);
 	i = 0;
 	while (i < length)
 	{
 		start = i;
-		while (i < length && str[i] != '%')
+		while (i < length && format[i] != '%')
 			i++;
-		if (i - start > 0 && !str_add(&res, ft_substr(str, start, i - start)))
-			return (clean_exit(&res, &args));
-		if (str[i] == '%' && (start = ++i) && i < length)
+		if (i - start > 0 && !str_add(&str, ft_substr(format, start, i - start)))
+			return (clear_all(&str, &args));
+		if (format[i] == '%' && (start = ++i) && i < length)
 		{
-			while (ft_in_set(str[i], ".0123456789"))
+			while (ft_in_set(format[i], ".0123456789"))
 				i++;
-			if (!add_format(&res, ft_substr(str, start, i - start), str[i], &args))
-				return (clean_exit(&res, &args));
+			if (!add_format(&str, ft_substr(format, start, i - start), format[i], &args))
+				return (clear_all(&str, &args));
 			i++;
 		}
 	}
-	i = str_write(res);
-	clean_exit(&res, &args);
+	i = str_write(str);
+	clear_all(&str, &args);
 	return (i);
 }
