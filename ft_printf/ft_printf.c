@@ -267,41 +267,39 @@ static char
 	int		length;
 	int		i;
 	int		j;
-	int		width_defined;
 	int		limit;
 
-	width_defined = (width > 0);
 	if (!str)
 		str = "(null)";
 	str_length = ft_strlen(str);
 	length = str_length;
-	if (width > str_length)
+	if (width > str_length || (precision >= 0 && width > precision))
 		length = width;
 	if (!(cpy = (char*)malloc(sizeof(*cpy) * (length + 1))))
 		return (NULL);
-
 	i = 0;
 	while (i < length)
 		cpy[i++] = ' ';
 	cpy[i] = 0;
-
-	if (width > 0 && precision == 0)
+	if (width > 0 && (precision == 0 || str_length == 0))
 	{
 		cpy[width] = 0;
 		return (cpy);
 	}
-
-	if (precision >= 0)
+	else if (precision == 0)
+	{
+		cpy[0] = 0;
+		return (cpy);
+	}
+	if (precision > 0)
 		limit = MIN(str_length, precision);
 	else
 		limit = str_length;
-
 	j = 0;
-	if (width_defined)
+	if (width == length)
 		i = length - limit;
 	else
 		i = 0;
-
 	while (j < limit)
 		cpy[i++] = str[j++];
 	cpy[i] = 0;
